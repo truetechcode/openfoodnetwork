@@ -62,17 +62,24 @@ blocks:
           - bundle install
           - cache store
           - sem-service start postgres
-          - 'bundle exec rake db:reset'
+          - cat /dev/null > config/database.yml
+          - 'bin/rails db:create'
+          - bin/rails test
           - 'bundle exec rake db:test:prepare'
           - 'bundle exec rake ofn:sample_data'
       jobs:
-        - name: RSpec - model tests
+        - name: RSpec - all tests
           commands:
             - bundle exec rspec spec
       epilogue:
         always:
           commands:
             - "[[ -f junit.xml ]] && test-results publish --name \"\U0001F9EA Unit tests\" junit.xml"
+      env_vars:
+        - name: DATABASE_URL
+          value: 'postgresql://postgres@localhost/test?encoding=utf8'
+        - name: RAILS_ENV
+          value: test
   - name: Integration tests
     dependencies:
       - Unit tests
