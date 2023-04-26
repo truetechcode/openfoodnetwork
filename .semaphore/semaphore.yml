@@ -5,8 +5,17 @@ agent:
     type: e1-standard-2
     os_image: ubuntu2004
 blocks:
-  - name: Setup
+  - name: Ubuntu Setup
     dependencies: []
+    task:
+      jobs:
+        - name: sudo
+          commands:
+            - sudo apt-get update
+            - sudo apt-get install -y build-essential
+  - name: Setup
+    dependencies:
+      - Ubuntu Setup
     task:
       jobs:
         - name: bundle
