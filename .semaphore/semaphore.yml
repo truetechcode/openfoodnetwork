@@ -66,6 +66,7 @@ blocks:
           - 'bin/rails db:create'
           - bin/rails test
           - 'bundle exec rake db:test:prepare'
+          - 'bundle exec rake db:seed'
           - 'bundle exec rake ofn:sample_data'
       jobs:
         - name: RSpec - all tests
