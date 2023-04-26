@@ -30,8 +30,7 @@ blocks:
             - bundle install
             - cache store
   - name: Code scanning
-    dependencies:
-      - Setup
+    dependencies: []
     task:
       jobs:
         - name: check style + security
@@ -49,7 +48,7 @@ blocks:
             - bundle exec brakeman
   - name: Unit tests
     dependencies:
-      - Code scanning
+      - Setup
     task:
       prologue:
         commands:
