@@ -24,6 +24,7 @@ blocks:
             - sem-version node 14.16.1
             - checkout
             - cache restore
+            - gem install bundler --version=2.3.5
             - bundle install
             - cache store
   - name: Code scanning
