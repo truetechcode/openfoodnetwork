@@ -1,13 +1,87 @@
 version: v1.0
-name: Initial Pipeline
+name: OFN Rails app
 agent:
   machine:
     type: e1-standard-2
     os_image: ubuntu2004
 blocks:
-  - name: 'Block #1'
+  - name: Setup
+    dependencies: []
     task:
       jobs:
-        - name: 'Job #1'
+        - name: bundle
           commands:
+            - sem-version ruby 3.0.3
+            - sem-version node 14.16.1
             - checkout
+            - cache restore
+            - bundle install
+            - cache store
+  - name: Code scanning
+    dependencies:
+      - Setup
+    task:
+      jobs:
+        - name: check style + security
+          commands:
+            - sem-version ruby 3.0.3
+            - sem-version node 14.16.1
+            - checkout
+            - cache restore
+            - bundle install
+            - cache store
+            - bundle exec rubocop
+            - bundle exec brakeman
+  - name: Unit tests
+    dependencies:
+      - Code scanning
+    task:
+      prologue:
+        commands:
+          - sem-version ruby 3.0.3
+          - sem-version node 14.16.1
+          - checkout
+          - cache restore
+          - bundle install
+          - cache store
+          - sem-service start postgres
+          - 'bundle exec rake db:setup'
+      jobs:
+        - name: RSpec - model tests
+          commands:
+            - bundle exec rspec spec/models
+        - name: RSpec - controller tests
+          commands:
+            - bundle exec rspec spec/controllers
+      epilogue:
+        always:
+          commands:
+            - "[[ -f junit.xml ]] && test-results publish --name \"\U0001F9EA Unit tests\" junit.xml"
+  - name: Integration tests
+    dependencies:
+      - Unit tests
+    task:
+      prologue:
+        commands:
+          - sem-version ruby 3.0.3
+          - sem-version node 14.16.1
+          - checkout
+          - cache restore
+          - bundle install
+          - cache store
+      jobs:
+        - name: RSpec - feature specs
+          commands:
+            - sem-service start postgres
+            - 'bundle exec rake db:setup'
+            - bundle exec rspec spec/features
+      epilogue:
+        always:
+          commands:
+            - "[[ -f junit.xml ]] && test-results publish --name \"\U0001F3D7️ Integration tests\" junit.xml"
+after_pipeline:
+  task:
+    jobs:
+      - name: Publish Results
+        commands:
+          - test-results gen-pipeline-report
